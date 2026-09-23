@@ -1,0 +1,23 @@
+#!/bin/sh
+# JSCR commit gate.
+#
+# Runs the deterministic pass over the staged change and blocks the commit on
+# any finding. No model call, no network: this must be fast enough to leave on.
+#
+# Install:  git config core.hooksPath tools/git-hooks
+# Skip once, and record that you did:  git commit --no-verify
+
+if [ -n "$JSCR_GATE_OFF" ]; then
+  echo "JSCR gate skipped: JSCR_GATE_OFF is set."
+  exit 0
+fi
+
+if git diff --cached --quiet; then
+  exit 0
+fi
+
+if command -v jscr >/dev/null 2>&1; then
+  jscr gate
+else
+  PYTHONPATH="$(git rev-parse --show-toplevel)/src" python3 -m jscr gate
+fi

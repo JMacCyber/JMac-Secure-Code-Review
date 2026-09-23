@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><title>Installing JSCR</title>
+<style>:root{--bg:#0d1117;--panel:#161b22;--fg:#e6edf3;--muted:#8b949e;--border:#30363d;--accent:#58a6ff}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;margin:0;padding:36px 40px}
+h1{margin:0 0 4px;font-size:24px}.sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+pre{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px 22px;
+font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;margin:0}
+.p{color:#3fb950}.c{color:var(--accent)}.ok{color:#3fb950}.no{color:#f85149}
+.note{color:var(--muted);font-size:13px;margin-top:16px}</style>
+<h1>Installing JSCR</h1>
+<div class="sub">A clean virtual environment, start to first policy. Nothing else was installed.</div>
+<pre><span class="p">$</span> <span class="c">git clone https://github.com/JMacCyber/JMac-Secure-Code-Review jscr</span>
+<span class="p">$</span> <span class="c">pip install ./jscr</span>
+<span class="p">$</span> <span class="c">pip list --format=freeze</span>
+jscr==0.1.0
+pip==21.2.4
+setuptools==58.0.4
+
+<span class="p">$</span> <span class="c">jscr init</span>
+wrote /home/dev/sample/.jscr.json
+Egress is closed and the provider is &#x27;null&#x27;. JSCR will run its deterministic checks and nothing will leave this machine until you set provider.name, provider.endpoint, egress.enabled and egress.allow_hosts yourself.
+
+<span class="p">$</span> <span class="c">jscr policy</span>
+Policy for /home/dev/sample
+------------------------------------------------------------------------
+  <span class="ok">allow</span>  fs.read            repository reads are the purpose of the tool
+  <span class="no">deny</span>   net.connect        egress.enabled is false
+  <span class="ok">allow</span>  provider.use       provider &#x27;null&#x27; is the configured provider
+  <span class="no">deny</span>   exec.run           scanners.semgrep is false
+  <span class="no">deny</span>   tool.call          tools.allow is empty
+  <span class="no">deny</span>   persist.write      persistence.mode is metadata_only; &#x27;review output&#x27; is not metadata
+  <span class="no">deny</span>   telemetry.send     telemetry.enabled is false
+  <span class="no">deny</span>   update.check       update.check is false; JSCR does not update itself</pre>
+<div class="note">Three packages in the environment: jscr, and pip and setuptools, which the
+environment ships with. JSCR pulls in nothing of its own.</div>

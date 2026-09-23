@@ -1,0 +1,13 @@
+:root{--bg:#0d1117;--panel:#161b22;--fg:#e6edf3;--muted:#8b949e;--border:#30363d;--accent:#58a6ff;--green:#3fb950;--red:#f85149;--amber:#d29922}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;margin:0;padding:44px 48px;width:1280px}
+.brand{color:var(--accent);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+h1{margin:0 0 6px;font-size:34px;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:17px;margin-bottom:30px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px}
+h2{margin:0 0 8px;font-size:20px}
+p{margin:0;color:#c9d1d9}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--accent);white-space:nowrap}
+.foot{margin-top:24px;color:var(--muted);font-size:14px}
+.icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.35)}
+.icon svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}

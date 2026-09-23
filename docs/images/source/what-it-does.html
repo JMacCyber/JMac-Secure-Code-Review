@@ -1,0 +1,67 @@
+<!doctype html><meta charset="utf-8"><title>What JSCR Does</title>
+<link rel="stylesheet" href="_base.css">
+<style>
+.flow{display:grid;grid-template-columns:1fr 36px 1.25fr 36px 1fr;align-items:stretch}
+.arrow{display:flex;align-items:center;justify-content:center}
+.arrow svg{width:26px;height:26px;stroke:var(--muted);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.step{color:var(--accent);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+ul{margin:10px 0 0;padding:0;list-style:none}
+li{padding:9px 0;border-top:1px solid var(--border);font-size:15px;color:#c9d1d9}
+li:first-child{border-top:0}
+li code{font-size:13px;padding:1px 6px}
+.opt{margin-top:14px;padding:12px 14px;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:14px}
+.opt b{color:var(--fg)}
+.codes{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin-top:10px;font-size:14px}
+.codes span:nth-child(odd){font:600 14px ui-monospace,Menlo,monospace}
+.g{color:var(--green)}.r{color:var(--red)}.a{color:var(--amber)}.m{color:var(--muted)}
+.rails{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+.rail{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.35);border-radius:10px;padding:14px 16px;font-size:14px}
+.rail b{display:block;color:var(--green);font-size:15px;margin-bottom:2px}
+</style>
+<div class="brand">JMac Secure Code Review</div>
+<h1>What It Does</h1>
+<div class="sub">It reads code, finds security mistakes, and tells you what it checked and what it did not.</div>
+<div class="flow">
+  <div class="card">
+    <div class="step">1. You Point It At Code</div>
+    <ul>
+      <li>What you staged <code>--staged</code></li>
+      <li>One commit <code>--commit</code></li>
+      <li>A branch or range <code>--base</code></li>
+      <li>A whole repository <code>--all</code></li>
+    </ul>
+  </div>
+  <div class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+  <div class="card">
+    <div class="step">2. It Checks For</div>
+    <ul>
+      <li>Passwords, keys and tokens left in files</li>
+      <li>User input passed to the shell or <code>eval</code></li>
+      <li>CI settings that grant too much access</li>
+      <li>Risky cloud and container settings</li>
+      <li>Dependencies and licences to look at</li>
+    </ul>
+    <div class="opt"><b>Optional:</b> an AI second opinion. Off until you turn it on, and it must quote real lines or its finding is thrown out.</div>
+  </div>
+  <div class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+  <div class="card">
+    <div class="step">3. It Reports</div>
+    <ul>
+      <li>What ran, and what did not, first</li>
+      <li>Each finding: severity, file, line, fix</li>
+      <li>Text, JSON, SARIF or one offline HTML page</li>
+    </ul>
+    <div class="codes">
+      <span class="g">0</span><span>Nothing at or above the bar</span>
+      <span class="r">1</span><span>Found something</span>
+      <span class="m">2</span><span>Could not run</span>
+      <span class="a">3</span><span>Part of it did not finish</span>
+    </div>
+  </div>
+</div>
+<div class="rails">
+  <div class="rail"><b>Runs On Your Machine</b>No account, no server</div>
+  <div class="rail"><b>Network Off By Default</b>Nothing leaves unless you allow it</div>
+  <div class="rail"><b>Never Runs Your Code</b>It only reads it</div>
+  <div class="rail"><b>Changes None Of Your Files</b>No autofix, no commits</div>
+</div>

@@ -1,0 +1,154 @@
+# JSCR's default semgrep rules.
+#
+# Small on purpose. These are patterns semgrep reads better than a regular
+# expression does, which is why they are here and not in the built-in
+# scanner: they match a call's shape and its arguments, not a line of text.
+# Rules that would repeat a built-in rule are left out, because two names for
+# one finding is noise, not coverage.
+#
+# Point semgrep somewhere else with scanners.semgrep_config, or put a
+# .semgrep.yml in the repository being reviewed. Both win over this file.
+rules:
+  - id: jscr-py-subprocess-shell
+    languages: [python]
+    severity: ERROR
+    message: >-
+      subprocess with shell=True runs the argument through a shell, so any
+      value in it can add a second command.
+    metadata:
+      cwe: "CWE-78"
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.run(..., shell=True, ...)
+          - pattern: subprocess.Popen(..., shell=True, ...)
+          - pattern: subprocess.call(..., shell=True, ...)
+          - pattern: subprocess.check_output(..., shell=True, ...)
+      - pattern-not: subprocess.$F("...", ..., shell=True, ...)
+
+  - id: jscr-py-yaml-load
+    languages: [python]
+    severity: ERROR
+    message: >-
+      yaml.load without SafeLoader builds arbitrary Python objects from the
+      document. Use yaml.safe_load.
+    metadata:
+      cwe: "CWE-502"
+    patterns:
+      - pattern: yaml.load($X)
+      - pattern-not: yaml.load($X, Loader=yaml.SafeLoader)
+
+  - id: jscr-py-pickle-loads
+    languages: [python]
+    severity: ERROR
+    message: >-
+      pickle reconstructs objects by running code. A pickle from outside the
+      program is remote code execution.
+    metadata:
+      cwe: "CWE-502"
+    pattern-either:
+      - pattern: pickle.loads(...)
+      - pattern: pickle.load(...)
+
+  - id: jscr-py-requests-verify-off
+    languages: [python]
+    severity: ERROR
+    message: >-
+      verify=False turns off certificate checking, so the connection can be
+      read and changed in transit.
+    metadata:
+      cwe: "CWE-295"
+    pattern: requests.$M(..., verify=False, ...)
+
+  - id: jscr-py-flask-debug
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Flask in debug mode serves an interactive console that executes code.
+    metadata:
+      cwe: "CWE-489"
+    pattern: $APP.run(..., debug=True, ...)
+
+  - id: jscr-py-mktemp
+    languages: [python]
+    severity: WARNING
+    message: >-
+      tempfile.mktemp returns a name, not a file, so another process can
+      create that path first. Use NamedTemporaryFile or mkstemp.
+    metadata:
+      cwe: "CWE-377"
+    pattern: tempfile.mktemp(...)
+
+  - id: jscr-py-assert-as-check
+    languages: [python]
+    severity: WARNING
+    message: >-
+      assert is removed when Python runs with -O, so a security check written
+      as an assert can disappear from the build that ships.
+    metadata:
+      cwe: "CWE-617"
+    patterns:
+      - pattern: assert $X, ...
+      - pattern-inside: |
+          def $F(...):
+            ...
+      - metavariable-regex:
+          metavariable: $X
+          regex: .*(auth|token|permission|role|owner|admin).*
+
+  - id: jscr-js-child-process-template
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      exec with an interpolated string runs a shell, so any value in the
+      string can add a second command. Use execFile with an argument list.
+    metadata:
+      cwe: "CWE-78"
+    pattern-either:
+      - pattern: exec(`...${$X}...`, ...)
+      - pattern: execSync(`...${$X}...`, ...)
+      - pattern: $CP.exec(`...${$X}...`, ...)
+      - pattern: $CP.execSync(`...${$X}...`, ...)
+
+  - id: jscr-js-new-function
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      new Function compiles a string into code, which is eval under another
+      name.
+    metadata:
+      cwe: "CWE-95"
+    pattern: new Function(...)
+
+  - id: jscr-js-document-write
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      document.write parses its argument as HTML, so a value that reaches it
+      can add script.
+    metadata:
+      cwe: "CWE-79"
+    pattern-either:
+      - pattern: document.write(...)
+      - pattern: document.writeln(...)
+
+  - id: jscr-js-jwt-verify-off
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      Decoding a token without verifying it means the payload is whatever the
+      caller typed. Use verify, with the algorithms listed.
+    metadata:
+      cwe: "CWE-347"
+    pattern-either:
+      - pattern: jwt.decode(...)
+      - pattern: '$JWT.verify(..., {algorithms: ["none"]}, ...)'
+
+  - id: jscr-js-postmessage-any-origin
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      postMessage with "*" sends the message to whatever page is in the
+      frame. Name the origin.
+    metadata:
+      cwe: "CWE-346"
+    pattern: $W.postMessage($MSG, "*")

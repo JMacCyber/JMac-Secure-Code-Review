@@ -1,0 +1,11 @@
+# The package itself has no runtime dependencies (ADR 0004), so there is
+# nothing to update there. GitHub Actions are the one supply chain this
+# repository does have, and they are watched.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "supply-chain"]

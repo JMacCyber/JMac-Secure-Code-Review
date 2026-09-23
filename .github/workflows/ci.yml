@@ -1,0 +1,200 @@
+name: CI
+
+# No pull_request trigger. The Linux jobs below run on a self-hosted runner,
+# and a pull_request run would execute a contributor's code on that machine.
+# Pull requests are reviewed, then run on push to a branch here.
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Every Linux job runs on a self-hosted ARM Linux runner. It costs no
+# Actions minutes. macOS and Windows cannot run there, so they are held
+# back to the branches that matter and skipped on day-to-day pushes.
+#
+# The runner has Python 3.9, 3.12 and 3.13 installed by uv, on PATH at
+# ~/.local/bin. actions/setup-python is not used on self-hosted: it has
+# no arm64 Linux builds for every version this matrix needs.
+
+env:
+  SELF_HOSTED_PATH: /home/ubuntu/.local/bin
+
+jobs:
+  egress-audit:
+    # Runs first and alone. If any module other than the one network module
+    # can reach the network, nothing else is worth running.
+    name: Egress audit
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: $SELF_HOSTED_PATH/python3.12 tools/egress_audit.py
+
+  no-runtime-dependencies:
+    name: No runtime dependencies
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: dependencies must be empty
+        run: |
+          $SELF_HOSTED_PATH/python3.12 - <<'PY'
+          import re, sys
+          text = open("pyproject.toml", encoding="utf-8").read()
+          match = re.search(r"^dependencies\s*=\s*\[(.*?)\]", text, re.S | re.M)
+          if match is None:
+              sys.exit("pyproject.toml declares no dependencies key")
+          body = re.sub(r"#.*", "", match.group(1)).strip()
+          if body:
+              sys.exit("ADR 0004: the shipped package must have no runtime dependencies, found: " + body)
+          print("dependencies = [] confirmed")
+          PY
+
+  test:
+    name: Tests (Linux, Python ${{ matrix.python }})
+    needs: [egress-audit]
+    runs-on: [self-hosted, Linux, ARM64]
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Run the suite with nothing installed
+        # No pip install step on purpose. The suite must pass offline with no
+        # dependencies; that is a property under test, not a convenience.
+        run: $SELF_HOSTED_PATH/python${{ matrix.python }} -m unittest discover -s tests -t . -q
+        env:
+          PYTHONPATH: src
+
+  test-other-platforms:
+    # The only job left on GitHub's paid machines, and it is off by default.
+    # On a private repository GitHub refuses to start these runners without
+    # billing set up: the job dies in about six seconds with no runner, no
+    # steps and no log, which reads exactly like a test failure and is not one.
+    # So it runs on manual dispatch only. macOS is covered by the development
+    # machine. Windows stays unproven until this repository is public, where
+    # these runners are free.
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [egress-audit]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+        python: ["3.9", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run the suite with nothing installed
+        run: python -m unittest discover -s tests -t . -q
+        env:
+          PYTHONPATH: src
+
+  lint:
+    name: Lint and types
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Tools in a throwaway venv
+        # Built fresh each run and deleted with the workspace, so the
+        # runner keeps no state between jobs.
+        run: |
+          $SELF_HOSTED_PATH/uv venv .venv --python 3.12
+          $SELF_HOSTED_PATH/uv pip install --python .venv/bin/python ruff mypy
+      - run: .venv/bin/ruff check src tools tests
+      - run: .venv/bin/ruff format --check src tools tests
+      - run: .venv/bin/mypy src
+
+  coverage:
+    name: Coverage
+    needs: [test]
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: |
+          $SELF_HOSTED_PATH/uv venv .venv --python 3.12
+          $SELF_HOSTED_PATH/uv pip install --python .venv/bin/python coverage
+      - name: Run the suite under coverage
+        # A second run of the same suite, deliberately separate from the
+        # matrix job above: that job proves the package needs nothing
+        # installed, and installing coverage into it would end that proof.
+        run: .venv/bin/coverage run -m unittest discover -s tests -t . -q
+        env:
+          PYTHONPATH: src
+      - name: Write the number, and what produced it
+        if: always()
+        run: .venv/bin/python tools/coverage_provenance.py
+      - name: Floor
+        # The number may rise. It may not fall silently.
+        run: .venv/bin/coverage report --fail-under=95
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: coverage
+          path: |
+            coverage.json
+            coverage-provenance.json
+          if-no-files-found: error
+
+  ground-truth:
+    name: Ground truth
+    needs: [test]
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Scan a corpus whose answers are known
+        # Coverage says the rules ran. This says the rules found the
+        # defects they were written for, and stayed quiet on the decoys.
+        # A non-zero exit is a miss or a false positive, both of which
+        # are regressions in what the product claims to do.
+        run: $SELF_HOSTED_PATH/python3.12 tools/ground_truth.py --json ground-truth.json
+        env:
+          PYTHONPATH: src
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: ground-truth
+          path: ground-truth.json
+          if-no-files-found: error
+
+  selfreview:
+    name: JSCR reviews its own change
+    needs: [test]
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Review this change, no network
+        run: |
+          $SELF_HOSTED_PATH/python3.12 -m jscr review \
+            --base "${{ github.event.before }}" \
+            --head HEAD \
+            --format sarif --output jscr.sarif || true
+        env:
+          PYTHONPATH: src
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: jscr-sarif
+          path: jscr.sarif
+          if-no-files-found: ignore

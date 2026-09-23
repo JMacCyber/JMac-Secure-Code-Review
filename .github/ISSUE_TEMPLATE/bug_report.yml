@@ -1,0 +1,38 @@
+name: Bug report
+description: Something behaves differently than documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **If this is a security issue, stop.** Report it privately per
+        [SECURITY.md](../blob/main/SECURITY.md) instead.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`jscr --version`, or the commit"
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The command you ran, and the change you ran it on.
+    validations: { required: true }
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: "Your jscr.json, with anything private removed."
+      render: json
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: "Include the exit code. Remove anything private first."
+      render: shell

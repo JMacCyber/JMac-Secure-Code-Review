@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "egress": {
+    "enabled": true,
+    "allow_hosts": ["api.anthropic.com"],
+    "allow_ports": [443]
+  },
+  "provider": {
+    "name": "anthropic",
+    "model": "claude-sonnet-5",
+    "api_key_env": "ANTHROPIC_API_KEY"
+  },
+  "review": {
+    "min_confidence": 0.7
+  }
+}

@@ -1,0 +1,45 @@
+<!doctype html><meta charset="utf-8"><title>Built For Vibe Coders And Small Teams</title>
+<link rel="stylesheet" href="_base.css">
+<style>
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card p{margin-bottom:14px}
+.when{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.not{margin-top:18px;display:flex;gap:16px;align-items:center;color:var(--muted);font-size:14px}
+.not b{color:var(--fg)}
+</style>
+<div class="brand">JMac Secure Code Review</div>
+<h1>Built For Vibe Coders And Small Teams</h1>
+<div class="sub">You ship fast, often with an AI assistant, and there is no security team to catch the slip.</div>
+<div class="grid">
+  <div class="card">
+    <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></div>
+    <div class="when">Vibe Coders</div>
+    <h2>Check What Your AI Wrote</h2>
+    <p>An AI assistant writes code fast. It can also leave in a password or build a shell command from user input. JSCR checks each change before you commit.</p>
+    <code>jscr gate</code>
+  </div>
+  <div class="card">
+    <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></div>
+    <div class="when">Vibe Coders</div>
+    <h2>Hand The Fix Back To Your AI</h2>
+    <p>When the gate stops a commit, its report holds a ready-made prompt. Paste it into your coding assistant: save a marker, branch, fix, test, then a person checks.</p>
+    <code>jscr gate --approve</code>
+  </div>
+  <div class="card">
+    <div class="icon"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5v7M8.3 6.9l7.4 4M8.3 17.1l7.4-4"/></svg></div>
+    <div class="when">Small Teams</div>
+    <h2>A Security Check With No Security Team</h2>
+    <p>Run it in your build on every change. Findings show up on the pull request through GitHub code scanning.</p>
+    <code>jscr review --base origin/main --format sarif</code>
+  </div>
+  <div class="card">
+    <div class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+    <div class="when">Both</div>
+    <h2>Check Code Before You Depend On It</h2>
+    <p>Check every file in a library, tool or template before you add it. It runs on your machine with the network off, so your code stays with you.</p>
+    <code>jscr review --all --repo their-project</code>
+  </div>
+</div>
+<div class="card not">
+  <div><b>Disclaimer:</b> JSCR does not prove code is safe; it adds layers of provenance, verification, and traceability before committing code.</div>
+</div>

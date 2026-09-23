@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify before building
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+      - run: python tools/egress_audit.py
+      - run: python -m unittest discover -s tests -t . -q
+        env:
+          PYTHONPATH: src
+
+  build:
+    name: Build, hash and attest
+    needs: [verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - name: SHA-256 of every artifact
+        run: |
+          cd dist
+          sha256sum * | tee SHA256SUMS
+      - name: SBOM
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py environment --output-format json --outfile dist/sbom.json
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: "dist/*.whl, dist/*.tar.gz"
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+            dist/SHA256SUMS
+            dist/sbom.json
+          body_path: CHANGELOG.md
+          draft: true

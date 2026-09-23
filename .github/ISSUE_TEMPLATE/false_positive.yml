@@ -1,0 +1,27 @@
+name: False positive or false negative
+description: A finding that is wrong, or a problem that was missed
+labels: ["findings"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Which
+      options: ["False positive - reported and it is not a problem", "False negative - real and it was missed"]
+    validations: { required: true }
+  - type: input
+    id: rule
+    attributes:
+      label: Rule ID
+      description: "e.g. jscr/py-os-system. Leave blank for a false negative."
+  - type: textarea
+    id: code
+    attributes:
+      label: The smallest code that shows it
+      render: text
+    validations: { required: true }
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is wrong
+      description: For a false positive, why the pattern is safe here.
+    validations: { required: true }
